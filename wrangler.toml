@@ -1,0 +1,10 @@
+name = "tigers-eye-worker"
+main = "worker/index.ts"
+compatibility_date = "2025-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 8787
+
+[vars]
+ALLOWED_ORIGIN = "https://tigerseye.pages.dev"
