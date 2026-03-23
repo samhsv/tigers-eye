@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import {
   getBiggestMovers,
   getHighestVolume,

@@ -1,4 +1,4 @@
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import { formatDollar, formatEndDate, formatPriceChange } from '../lib/format';
 import { categoryToColor } from '../lib/colors';
 

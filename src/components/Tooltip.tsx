@@ -1,19 +1,14 @@
-import { useEffect, useRef } from 'react';
-import { useApp } from '../context/AppContext';
+import { useEffect, useState } from 'react';
+import { useApp } from '../context/useApp';
 import { priceToPercent, formatDollar } from '../lib/format';
 
 export default function Tooltip() {
   const { state } = useApp();
-  const posRef = useRef({ x: 0, y: 0 });
-  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      posRef.current = { x: e.clientX, y: e.clientY };
-      if (tooltipRef.current) {
-        tooltipRef.current.style.left = `${e.clientX + 14}px`;
-        tooltipRef.current.style.top = `${e.clientY - 10}px`;
-      }
+      setPos({ x: e.clientX, y: e.clientY });
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -27,11 +22,10 @@ export default function Tooltip() {
 
   return (
     <div
-      ref={tooltipRef}
       className="fixed z-40 pointer-events-none max-w-xs px-3 py-2 rounded-lg bg-bg-card/95 border border-white/10 backdrop-blur-sm"
       style={{
-        left: posRef.current.x + 14,
-        top: posRef.current.y - 10,
+        left: pos.x + 14,
+        top: pos.y - 10,
       }}
     >
       <p className="text-xs text-text-primary leading-tight mb-1">

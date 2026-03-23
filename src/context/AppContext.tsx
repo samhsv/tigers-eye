@@ -1,6 +1,4 @@
 import {
-  createContext,
-  useContext,
   useReducer,
   useCallback,
   useEffect,
@@ -10,6 +8,7 @@ import {
 import type { AppState, AppAction, GalaxyViewHandle } from '../types';
 import { fetchMarkets, buildGraphData } from '../lib/polymarket';
 import { streamAIResponse, MODELS, PROMPTS, buildMarketAnalysisMessage } from '../lib/ai';
+import { AppContext } from './AppContextDef';
 
 // ── Initial state ──
 const initialState: AppState = {
@@ -68,26 +67,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
   }
 }
 
-// ── Context ──
-interface AppContextValue {
-  state: AppState;
-  dispatch: React.Dispatch<AppAction>;
-  flyToNode: (nodeId: string) => void;
-  galaxyRef: React.RefObject<GalaxyViewHandle | null>;
-}
-
-const AppContext = createContext<AppContextValue | null>(null);
-
-export function useApp(): AppContextValue {
-  const ctx = useContext(AppContext);
-  if (!ctx) throw new Error('useApp must be used within AppProvider');
-  return ctx;
-}
-
 // ── Provider ──
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
-  const galaxyRef = useRef<GalaxyViewHandle | null>(null);
+  const galaxyHandleRef = useRef<GalaxyViewHandle | null>(null);
   const aiAbortRef = useRef<AbortController | null>(null);
 
   // Fetch markets on mount
@@ -98,10 +81,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'SET_MARKETS', payload: { markets, graphData } });
         dispatch({ type: 'SET_DATA_LOADED' });
       })
-      .catch(err => {
+      .catch((err: Error) => {
         console.error('Failed to fetch markets:', err);
         dispatch({ type: 'SET_DATA_ERROR', payload: err.message });
-        // Still mark as loaded so loading screen dismisses
         dispatch({ type: 'SET_DATA_LOADED' });
       });
   }, []);
@@ -110,7 +92,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!state.selectedMarket) return;
 
-    // Abort previous stream
     aiAbortRef.current?.abort();
     const controller = new AbortController();
     aiAbortRef.current = controller;
@@ -135,22 +116,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
 
     return () => controller.abort();
-  }, [state.selectedMarket?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.selectedMarket?.id]);
 
-  // flyToNode: camera + select
+  const setGalaxyRef = useCallback((handle: GalaxyViewHandle | null) => {
+    galaxyHandleRef.current = handle;
+  }, []);
+
   const flyToNode = useCallback(
     (nodeId: string) => {
       const market = state.markets.find(m => m.id === nodeId);
       if (!market) return;
 
-      galaxyRef.current?.flyToNode(nodeId);
+      galaxyHandleRef.current?.flyToNode(nodeId);
       dispatch({ type: 'SELECT_MARKET', payload: market });
     },
     [state.markets],
   );
 
   return (
-    <AppContext.Provider value={{ state, dispatch, flyToNode, galaxyRef }}>
+    <AppContext.Provider value={{ state, dispatch, flyToNode, setGalaxyRef }}>
       {children}
     </AppContext.Provider>
   );

@@ -1,36 +1,50 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useApp } from '../context/AppContext';
+import { useSyncExternalStore, useCallback, useRef } from 'react';
+import { useApp } from '../context/useApp';
 import { getTopMarketsForAnalysis } from '../lib/polymarket';
 import { fetchAIJSON, MODELS, PROMPTS, buildMispricedMessage } from '../lib/ai';
 import { priceToPercent } from '../lib/format';
 import type { MispricedResponse } from '../types';
 
+// Subscribes to a 1-second tick so React re-renders on each tick
+function subscribeTick(callback: () => void) {
+  const id = setInterval(callback, 1000);
+  return () => clearInterval(id);
+}
+
+function useCooldownTimer(cooldownUntil: number | null) {
+  // getSnapshot is called by useSyncExternalStore — it may call Date.now()
+  // because it is a snapshot of external state (time), which is the intended use
+  const getSnapshot = useCallback(() => {
+    if (!cooldownUntil) return { active: false, remaining: '' };
+    const diff = cooldownUntil - Date.now();
+    if (diff <= 0) return { active: false, remaining: '' };
+    const minutes = Math.floor(diff / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+    return {
+      active: true,
+      remaining: `${minutes}:${seconds.toString().padStart(2, '0')}`,
+    };
+  }, [cooldownUntil]);
+
+  // Cache the result to maintain referential stability when values haven't changed
+  const cachedRef = useRef({ active: false, remaining: '' });
+  const stableGetSnapshot = useCallback(() => {
+    const next = getSnapshot();
+    if (next.active === cachedRef.current.active && next.remaining === cachedRef.current.remaining) {
+      return cachedRef.current;
+    }
+    cachedRef.current = next;
+    return next;
+  }, [getSnapshot]);
+
+  return useSyncExternalStore(subscribeTick, stableGetSnapshot, stableGetSnapshot);
+}
+
 export default function MispricedPanel() {
   const { state, dispatch, flyToNode } = useApp();
-  const [cooldownRemaining, setCooldownRemaining] = useState('');
-
-  // Cooldown timer
-  useEffect(() => {
-    if (!state.mispricedCooldownUntil) return;
-
-    const tick = () => {
-      const remaining = state.mispricedCooldownUntil! - Date.now();
-      if (remaining <= 0) {
-        setCooldownRemaining('');
-        return;
-      }
-      const minutes = Math.floor(remaining / 60000);
-      const seconds = Math.floor((remaining % 60000) / 1000);
-      setCooldownRemaining(`${minutes}:${seconds.toString().padStart(2, '0')}`);
-    };
-
-    tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, [state.mispricedCooldownUntil]);
-
-  const isOnCooldown =
-    state.mispricedCooldownUntil !== null && state.mispricedCooldownUntil > Date.now();
+  const { remaining: cooldownRemaining, active: isOnCooldown } = useCooldownTimer(
+    state.mispricedCooldownUntil,
+  );
 
   const handleAnalyze = useCallback(async () => {
     if (state.mispricedLoading || isOnCooldown) return;
@@ -101,12 +115,10 @@ export default function MispricedPanel() {
               {/* Price comparison bar */}
               <div className="flex items-center gap-2 mb-2">
                 <div className="flex-1 h-1.5 bg-bg-secondary rounded-full relative">
-                  {/* Current price marker */}
                   <div
                     className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-text-secondary"
                     style={{ left: `${pick.currentPrice * 100}%` }}
                   />
-                  {/* Fair price marker */}
                   <div
                     className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-ai-accent"
                     style={{ left: `${pick.fairPrice * 100}%` }}

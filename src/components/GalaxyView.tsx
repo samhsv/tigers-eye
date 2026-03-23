@@ -2,12 +2,13 @@ import { useRef, useCallback, useEffect, useImperativeHandle, forwardRef, useSta
 import ForceGraph3D from 'react-force-graph-3d';
 import * as THREE from 'three';
 import SpriteText from 'three-spritetext';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../context/useApp';
 import { computeClusterCenters } from '../lib/polymarket';
-import type { GalaxyViewHandle, GraphNode } from '../types';
+import type { GalaxyViewHandle, GraphNode, NodeUserData } from '../types';
 
 const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref) {
   const { state, dispatch } = useApp();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fgRef = useRef<any>(null);
   const [dimensions, setDimensions] = useState({
     width: window.innerWidth,
@@ -85,14 +86,14 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
         const center = clusterCenters[node.category];
         if (!center) continue;
         const k = alpha * 0.3;
-        node.vx += (center.x - node.x) * k;
-        node.vy += (center.y - node.y) * k;
-        node.vz += (center.z - node.z) * k;
+        node.vx! += (center.x - node.x!) * k;
+        node.vy! += (center.y - node.y!) * k;
+        node.vz! += (center.z - node.z!) * k;
       }
     });
 
     fg.d3Force('center', null);
-    fg.d3Force('charge')?.strength(-30);
+    fg.d3Force('charge')?.strength?.(-30);
     fg.d3ReheatSimulation();
 
     // Category labels
@@ -102,8 +103,11 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
     for (const cat of categories) {
       const center = clusterCenters[cat];
       const sprite = new SpriteText(cat.toUpperCase(), 8, '#8B95A5');
-      (sprite as any).fontFamily = "'JetBrains Mono', monospace";
-      (sprite as any).fontWeight = '500';
+      // SpriteText supports these properties but types are incomplete
+      Object.assign(sprite, {
+        fontFamily: "'JetBrains Mono', monospace",
+        fontWeight: '500',
+      });
       sprite.position.set(center.x, center.y + 50, center.z);
       sprite.material.opacity = 0.35;
       sprite.material.transparent = true;
@@ -116,7 +120,7 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
       clusterLabelsRef.current.forEach(s => scene.remove(s));
       clusterLabelsRef.current = [];
     };
-  }, [state.graphData.nodes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [state.graphData.nodes]);
 
   // Camera animation on data load
   useEffect(() => {
@@ -136,7 +140,7 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
   }, [state.dataLoaded]);
 
   // Custom orb node renderer
-  const createOrbNode = useCallback((node: any) => {
+  const createOrbNode = useCallback((node: GraphNode) => {
     const radius = node.orbSize || 2;
     const color = new THREE.Color(node.orbColor || '#FF6B1A');
 
@@ -169,23 +173,25 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
       glowMat,
       baseRadius: radius,
       pulseSpeed: node.pulseSpeed || 0,
-    };
+    } satisfies NodeUserData;
 
     return group;
   }, []);
 
   // Hover handler
   const handleNodeHover = useCallback(
-    (node: any, prevNode: any) => {
+    (node: GraphNode | null, prevNode: GraphNode | null) => {
       // Restore previous node
-      if (prevNode?.__threeObj?.userData?.coreMat) {
-        prevNode.__threeObj.userData.coreMat.opacity = 0.85;
-        prevNode.__threeObj.scale.setScalar(1);
+      const prevObj = prevNode?.__threeObj;
+      if (prevObj?.userData?.coreMat) {
+        (prevObj.userData as NodeUserData).coreMat.opacity = 0.85;
+        prevObj.scale.setScalar(1);
       }
       // Highlight current node
-      if (node?.__threeObj?.userData?.coreMat) {
-        node.__threeObj.userData.coreMat.opacity = 1.0;
-        node.__threeObj.scale.setScalar(1.15);
+      const currObj = node?.__threeObj;
+      if (currObj?.userData?.coreMat) {
+        (currObj.userData as NodeUserData).coreMat.opacity = 1.0;
+        currObj.scale.setScalar(1.15);
       }
       dispatch({ type: 'HOVER_MARKET', payload: node || null });
     },
@@ -194,7 +200,7 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
 
   // Click handler
   const handleNodeClick = useCallback(
-    (node: any) => {
+    (node: GraphNode) => {
       if (!node || !fgRef.current) return;
 
       const market = state.markets.find(m => m.id === node.id);
@@ -202,9 +208,9 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
 
       // Fly to node
       const distance = 80;
-      const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
+      const distRatio = 1 + distance / Math.hypot(node.x!, node.y!, node.z!);
       fgRef.current.cameraPosition(
-        { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio },
+        { x: node.x! * distRatio, y: node.y! * distRatio, z: node.z! * distRatio },
         { x: node.x, y: node.y, z: node.z },
         1500,
       );
@@ -221,9 +227,9 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
     if (!nodes) return;
 
     for (const node of nodes) {
-      const obj = (node as any).__threeObj;
+      const obj = node.__threeObj;
       if (!obj?.userData?.glow) continue;
-      const { glow, pulseSpeed } = obj.userData;
+      const { glow, pulseSpeed } = obj.userData as NodeUserData;
       if (pulseSpeed <= 0) continue;
 
       const scale = 1 + 0.15 * Math.sin(now * 0.001 * pulseSpeed);

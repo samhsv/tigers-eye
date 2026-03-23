@@ -1,5 +1,6 @@
-import { useRef } from 'react';
-import { AppProvider, useApp } from './context/AppContext';
+import { useCallback } from 'react';
+import { AppProvider } from './context/AppContext';
+import { useApp } from './context/useApp';
 import GalaxyView from './components/GalaxyView';
 import LoadingScreen from './components/LoadingScreen';
 import Tooltip from './components/Tooltip';
@@ -8,18 +9,18 @@ import FeedPanel from './components/FeedPanel';
 import type { GalaxyViewHandle } from './types';
 
 function AppContent() {
-  const { galaxyRef } = useApp();
-  const localRef = useRef<GalaxyViewHandle>(null);
+  const { setGalaxyRef } = useApp();
 
-  // Sync the local ref to the context galaxyRef
-  const setRef = (handle: GalaxyViewHandle | null) => {
-    (localRef as React.MutableRefObject<GalaxyViewHandle | null>).current = handle;
-    (galaxyRef as React.MutableRefObject<GalaxyViewHandle | null>).current = handle;
-  };
+  const handleRef = useCallback(
+    (handle: GalaxyViewHandle | null) => {
+      setGalaxyRef(handle);
+    },
+    [setGalaxyRef],
+  );
 
   return (
     <>
-      <GalaxyView ref={setRef} />
+      <GalaxyView ref={handleRef} />
       <LoadingScreen />
       <Tooltip />
       <MarketCard />

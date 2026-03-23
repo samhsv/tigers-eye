@@ -1,18 +1,23 @@
-import { useState, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useState, useEffect, useRef } from 'react';
+import { useApp } from '../context/useApp';
 
 export default function LoadingScreen() {
   const { state } = useApp();
   const [visible, setVisible] = useState(true);
-  const [fading, setFading] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Derive fading directly from state — no setState in effect body
+  const fading = state.dataLoaded;
+
+  // Remove from DOM after fade transition completes
   useEffect(() => {
-    if (state.dataLoaded) {
-      setFading(true);
-      const timer = setTimeout(() => setVisible(false), 700);
-      return () => clearTimeout(timer);
-    }
-  }, [state.dataLoaded]);
+    if (!fading) return;
+
+    timerRef.current = setTimeout(() => setVisible(false), 700);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [fading]);
 
   if (!visible) return null;
 
@@ -29,7 +34,7 @@ export default function LoadingScreen() {
           color: '#FF6B1A',
         }}
       >
-        TIGER'S EYE
+        TIGER&apos;S EYE
       </h1>
 
       <p
