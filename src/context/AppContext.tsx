@@ -7,7 +7,7 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import type { AppState, AppAction, MarketNode, GalaxyViewHandle } from '../types';
+import type { AppState, AppAction, GalaxyViewHandle } from '../types';
 import { fetchMarkets, buildGraphData } from '../lib/polymarket';
 import { streamAIResponse, MODELS, PROMPTS, buildMarketAnalysisMessage } from '../lib/ai';
 
