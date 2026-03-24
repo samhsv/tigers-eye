@@ -53,9 +53,10 @@ export async function streamAIResponse(options: AIStreamOptions): Promise<void> 
 
         try {
           const json = JSON.parse(trimmed.slice(6));
-          const delta = json.choices?.[0]?.delta?.content;
-          if (delta) {
-            onChunk(delta);
+          const delta = json.choices?.[0]?.delta;
+          const text = delta?.content || delta?.reasoning_content || delta?.reasoning;
+          if (text) {
+            onChunk(text);
           }
         } catch {
           // Skip malformed chunks
@@ -97,7 +98,8 @@ export async function fetchAIJSON<T>(
   }
 
   const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
+  const msg = data.choices?.[0]?.message;
+  const content = msg?.content || msg?.reasoning_content || msg?.reasoning;
   if (!content) throw new Error('No content in AI response');
 
   const cleaned = content

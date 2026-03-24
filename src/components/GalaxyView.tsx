@@ -76,25 +76,32 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
       starsRef.current = stars;
     }
 
-    // Clustering forces
+    // Clustering forces — deferred so the library's d3 simulation is fully initialized
     const categories = [...new Set(state.graphData.nodes.map(n => n.category))];
     const clusterCenters = computeClusterCenters(categories);
 
-    fg.d3Force('cluster', (alpha: number) => {
-      const nodes = state.graphData.nodes as GraphNode[];
-      for (const node of nodes) {
-        const center = clusterCenters[node.category];
-        if (!center) continue;
-        const k = alpha * 0.3;
-        node.vx! += (center.x - node.x!) * k;
-        node.vy! += (center.y - node.y!) * k;
-        node.vz! += (center.z - node.z!) * k;
-      }
-    });
+    const forceTimer = setTimeout(() => {
+      if (!fgRef.current) return;
+      try {
+        fg.d3Force('cluster', (alpha: number) => {
+          const nodes = state.graphData.nodes as GraphNode[];
+          for (const node of nodes) {
+            const center = clusterCenters[node.category];
+            if (!center) continue;
+            const k = alpha * 0.3;
+            node.vx! += (center.x - node.x!) * k;
+            node.vy! += (center.y - node.y!) * k;
+            node.vz! += (center.z - node.z!) * k;
+          }
+        });
 
-    fg.d3Force('center', null);
-    fg.d3Force('charge')?.strength?.(-30);
-    fg.d3ReheatSimulation();
+        fg.d3Force('center', null);
+        fg.d3Force('charge')?.strength?.(-30);
+        fg.d3ReheatSimulation();
+      } catch {
+        // Simulation not yet ready — forces will apply on next data update
+      }
+    }, 0);
 
     // Category labels
     clusterLabelsRef.current.forEach(s => scene.remove(s));
@@ -117,6 +124,7 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
     }
 
     return () => {
+      clearTimeout(forceTimer);
       clusterLabelsRef.current.forEach(s => scene.remove(s));
       clusterLabelsRef.current = [];
     };
