@@ -5,7 +5,8 @@
       "Bash(node:*)",
       "Bash(curl -s \"https://openrouter.ai/api/v1/models\")",
       "WebFetch(domain:openrouter.ai)",
-      "WebFetch(domain:gamma-api.polymarket.com)"
+      "WebFetch(domain:gamma-api.polymarket.com)",
+      "Bash(grep:*)"
     ]
   }
 }

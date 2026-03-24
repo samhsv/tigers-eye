@@ -69,12 +69,12 @@ export default function MispricedPanel() {
   }, [state.markets, state.mispricedLoading, isOnCooldown, dispatch]);
 
   return (
-    <div className="pb-2">
+    <div className="pb-3">
       {/* Button */}
       <button
         onClick={handleAnalyze}
         disabled={state.mispricedLoading || isOnCooldown}
-        className="w-full py-3.5 rounded-xl font-semibold text-base text-white transition-all disabled:opacity-50"
+        className="w-full py-4 rounded-xl font-semibold text-base text-white transition-all disabled:opacity-50"
         style={{
           background: state.mispricedLoading || isOnCooldown
             ? '#3a3a4a'
@@ -94,8 +94,8 @@ export default function MispricedPanel() {
 
       {/* Results */}
       {state.mispricedData && state.mispricedData.length > 0 && (
-        <div className="mt-4 space-y-4">
-          <div className="border-l-2 border-ai-accent pl-2">
+        <div className="mt-5 space-y-5">
+          <div className="border-l-2 border-ai-accent pl-3">
             <span className="text-[11px] uppercase tracking-wider text-ai-accent font-semibold">
               Mispricing Signals
             </span>
@@ -110,7 +110,7 @@ export default function MispricedPanel() {
               <button
                 key={pick.marketId || i}
                 onClick={() => flyToNode(pick.marketId)}
-                className="w-full text-left p-4 rounded-xl bg-glass-bg hover:bg-surface-elevated transition-all duration-200 border border-glass-border hover:border-glass-border-hover"
+                className="w-full text-left p-5 rounded-xl bg-glass-bg hover:bg-surface-elevated transition-all duration-200 border border-glass-border hover:border-glass-border-hover"
               >
                 <p className="text-[13px] text-text-primary font-medium leading-tight mb-3">
                   {pick.question}

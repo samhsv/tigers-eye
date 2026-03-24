@@ -22,12 +22,12 @@ function FeedItem({
   return (
     <button
       onClick={onClick}
-      className="group w-full text-left px-3 py-3 hover:bg-white/[0.06] rounded-lg transition-all duration-150 flex items-center justify-between gap-4"
+      className="group w-full text-left px-3.5 py-3 hover:bg-white/[0.06] rounded-lg transition-all duration-150 flex items-center justify-between gap-4"
     >
       <span className="text-[13px] text-text-primary/90 leading-snug flex-1 min-w-0 line-clamp-2 group-hover:text-text-primary transition-colors">
         {market.question}
       </span>
-      <span className="text-xs font-mono shrink-0 tabular-nums pr-1">{rightContent}</span>
+      <span className="text-xs font-mono shrink-0 tabular-nums">{rightContent}</span>
     </button>
   );
 }
@@ -48,11 +48,11 @@ function FeedSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-4 mb-4 section-card overflow-hidden">
+    <div className="mx-5 mb-5 section-card overflow-hidden">
       {/* Clickable header */}
       <button
         onClick={() => onToggle(sectionKey)}
-        className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-white/[0.03] transition-colors rounded-xl"
+        className="w-full flex items-center gap-2.5 px-4 py-3.5 hover:bg-white/[0.03] transition-colors rounded-xl"
       >
         <span className="text-sm">{icon}</span>
         <span className="text-xs uppercase tracking-wider text-text-secondary font-semibold flex-1 text-left">
@@ -73,7 +73,7 @@ function FeedSection({
           isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'
         }`}
       >
-        <div className="px-3 pb-3 space-y-0.5">
+        <div className="px-2 pt-1 pb-3 space-y-1">
           {children}
         </div>
       </div>
@@ -126,12 +126,12 @@ export default function FeedPanel() {
 
       {/* Panel */}
       <div
-        className={`fixed top-0 right-0 z-20 h-full w-[360px] glass-panel border-l border-white/[0.06] overflow-y-auto transition-transform duration-300
+        className={`fixed top-0 right-0 z-20 h-full w-[380px] glass-panel border-l border-white/[0.06] overflow-y-auto transition-transform duration-300
           ${state.feedPanelOpen ? 'translate-x-0' : 'translate-x-full'}
           lg:translate-x-0 lg:rounded-none`}
       >
         {/* Header */}
-        <div className="px-5 pt-6 pb-2 flex items-start justify-between">
+        <div className="px-6 pt-7 pb-5 flex items-start justify-between">
           <div>
             <h2 className="text-base font-semibold text-text-primary tracking-tight">
               Market Feed
@@ -223,12 +223,12 @@ export default function FeedPanel() {
         </FeedSection>
 
         {/* Mispriced Section */}
-        <div className="mx-4 mt-2 mb-4">
+        <div className="mx-5 mt-3 mb-4">
           <MispricedPanel />
         </div>
 
         {/* Bottom padding for mobile */}
-        <div className="h-20 lg:h-8" />
+        <div className="h-24 lg:h-10" />
       </div>
     </>
   );

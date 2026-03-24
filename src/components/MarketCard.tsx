@@ -54,7 +54,7 @@ export default function MarketCard() {
       <div
         className={`fixed z-40 glass-panel rounded-xl overflow-hidden flex flex-col
           bottom-0 left-0 right-0 max-h-[80vh] rounded-t-2xl
-          lg:bottom-auto lg:left-8 lg:right-auto lg:top-1/2 lg:-translate-y-1/2 lg:w-[420px] lg:max-h-[88vh] lg:rounded-xl`}
+          lg:bottom-auto lg:left-8 lg:right-auto lg:top-1/2 lg:-translate-y-1/2 lg:w-[440px] lg:max-h-[88vh] lg:rounded-xl`}
         style={{
           animation: isClosing
             ? 'slideOutToLeft 0.2s ease-in forwards'
@@ -68,9 +68,9 @@ export default function MarketCard() {
           <div className="h-[3px]" style={{ background: market.orbColor }} />
 
           {/* Header */}
-          <div className="flex items-start justify-between p-5 pb-0">
+          <div className="flex items-start justify-between p-6 pb-3">
             <span
-              className="text-[11px] font-medium uppercase tracking-wider px-2.5 py-1 rounded-md"
+              className="text-[11px] font-medium uppercase tracking-wider px-3 py-1.5 rounded-lg"
               style={{
                 backgroundColor: categoryToColor(market.category) + '20',
                 color: categoryToColor(market.category),
@@ -89,9 +89,9 @@ export default function MarketCard() {
           </div>
 
           {/* Event title + Question */}
-          <div className="px-5 pt-3 pb-4">
+          <div className="px-6 pt-2 pb-5">
             {market.eventTitle && market.eventTitle !== market.question && (
-              <p className="text-[11px] text-text-secondary font-medium tracking-wide uppercase mb-1">
+              <p className="text-[11px] text-text-secondary font-medium tracking-wide uppercase mb-2">
                 {market.eventTitle}
               </p>
             )}
@@ -101,9 +101,9 @@ export default function MarketCard() {
           </div>
 
           {/* Data zone */}
-          <div className="mx-5 mb-4 section-card p-4">
+          <div className="mx-6 mb-5 section-card p-5">
             {/* Probability gauge */}
-            <div className="mb-4">
+            <div className="mb-0">
               <div className="flex items-baseline justify-between mb-2">
                 <div>
                   <span className="text-2xl lg:text-3xl font-bold text-yes-green">{yesPercent}</span>
@@ -126,7 +126,7 @@ export default function MarketCard() {
                 />
               </div>
               {/* Anchored contestedness label with side lines */}
-              <div className="mt-3 flex items-center justify-center gap-2">
+              <div className="mt-3.5 flex items-center justify-center gap-2">
                 <div className="flex-1 h-px bg-white/[0.06]" />
                 <span
                   className="text-[11px] font-medium tracking-wide px-2"
@@ -139,13 +139,13 @@ export default function MarketCard() {
             </div>
 
             {/* Internal separator */}
-            <div className="h-px bg-white/[0.08] mb-3" />
+            <div className="h-px bg-white/[0.08] my-4" />
 
             {/* Stats row */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-4">
               {stats.map((stat, i) => (
                 <div key={stat.label} className="flex-1 min-w-[60px] text-center flex items-center">
-                  {i > 0 && <div className="w-px h-6 bg-white/[0.10] -ml-1.5 mr-1.5 shrink-0" />}
+                  {i > 0 && <div className="w-px h-6 bg-white/[0.10] -ml-2 mr-2 shrink-0" />}
                   <div className="flex-1">
                     <div className="text-[11px] text-text-secondary mb-1">{stat.label}</div>
                     <div
@@ -162,8 +162,8 @@ export default function MarketCard() {
         </div>
 
         {/* AI Take section — fills remaining space */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-5" style={{ background: 'rgba(255, 184, 77, 0.02)' }}>
-          <div className="flex items-center gap-2 mb-3">
+        <div className="flex-1 min-h-0 overflow-y-auto p-6" style={{ background: 'rgba(255, 184, 77, 0.02)' }}>
+          <div className="flex items-center gap-2 mb-4">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
               <path d="M7 1l1.5 4.5L13 7l-4.5 1.5L7 13l-1.5-4.5L1 7l4.5-1.5L7 1z" fill="currentColor" className="text-ai-accent" />
             </svg>
