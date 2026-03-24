@@ -30,7 +30,7 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
   useImperativeHandle(ref, () => ({
     flyToNode: (nodeId: string) => {
       if (!fgRef.current) return;
-      const graphNode = fgRef.current.graphData().nodes.find((n: GraphNode) => n.id === nodeId);
+      const graphNode = (state.graphData.nodes as GraphNode[]).find(n => n.id === nodeId);
       if (!graphNode || graphNode.x === undefined) return;
 
       const distance = 80;
@@ -46,7 +46,7 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
         1500,
       );
     },
-  }));
+  }), [state.graphData.nodes]);
 
   // Setup starfield + clustering forces + category labels
   useEffect(() => {
@@ -81,7 +81,7 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
     const clusterCenters = computeClusterCenters(categories);
 
     fg.d3Force('cluster', (alpha: number) => {
-      const nodes = fg.graphData().nodes;
+      const nodes = state.graphData.nodes as GraphNode[];
       for (const node of nodes) {
         const center = clusterCenters[node.category];
         if (!center) continue;
@@ -223,8 +223,8 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
   // Pulse animation
   const handleEngineTick = useCallback(() => {
     const now = Date.now();
-    const nodes = fgRef.current?.graphData()?.nodes;
-    if (!nodes) return;
+    const nodes = state.graphData.nodes as GraphNode[];
+    if (!nodes || nodes.length === 0) return;
 
     for (const node of nodes) {
       const obj = node.__threeObj;
@@ -235,7 +235,7 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
       const scale = 1 + 0.15 * Math.sin(now * 0.001 * pulseSpeed);
       glow.scale.setScalar(scale);
     }
-  }, []);
+  }, [state.graphData.nodes]);
 
   if (state.graphData.nodes.length === 0) return null;
 
