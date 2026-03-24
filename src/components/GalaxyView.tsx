@@ -3,7 +3,7 @@ import ForceGraph3D from 'react-force-graph-3d';
 import * as THREE from 'three';
 import SpriteText from 'three-spritetext';
 import { useApp } from '../context/useApp';
-import { computeClusterCenters } from '../lib/polymarket';
+import { getClusterConfig } from '../lib/clustering';
 import type { GalaxyViewHandle, GraphNode, NodeUserData } from '../types';
 
 const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref) {
@@ -76,9 +76,8 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
       starsRef.current = stars;
     }
 
-    // Clustering forces — deferred so the library's d3 simulation is fully initialized
-    const categories = [...new Set(state.graphData.nodes.map(n => n.category))];
-    const clusterCenters = computeClusterCenters(categories);
+    // ── Dynamic clustering based on active lens ──
+    const config = getClusterConfig(state.activeCluster, state.markets);
 
     const forceTimer = setTimeout(() => {
       if (!fgRef.current) return;
@@ -86,7 +85,8 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
         fg.d3Force('cluster', (alpha: number) => {
           const nodes = state.graphData.nodes as GraphNode[];
           for (const node of nodes) {
-            const center = clusterCenters[node.category];
+            const clusterKey = config.assignments.get(node.id);
+            const center = clusterKey ? config.centers[clusterKey] : undefined;
             if (!center) continue;
             const k = alpha * 0.3;
             node.vx! += (center.x - node.x!) * k;
@@ -103,19 +103,17 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
       }
     }, 0);
 
-    // Category labels
+    // ── Dynamic cluster labels ──
     clusterLabelsRef.current.forEach(s => scene.remove(s));
     clusterLabelsRef.current = [];
 
-    for (const cat of categories) {
-      const center = clusterCenters[cat];
-      const sprite = new SpriteText(cat.toUpperCase(), 8, '#8B95A5');
-      // SpriteText supports these properties but types are incomplete
+    for (const lbl of config.labels) {
+      const sprite = new SpriteText(lbl.label, 8, lbl.color || '#8B95A5');
       Object.assign(sprite, {
         fontFamily: "'JetBrains Mono', monospace",
         fontWeight: '500',
       });
-      sprite.position.set(center.x, center.y + 50, center.z);
+      sprite.position.set(lbl.position.x, lbl.position.y, lbl.position.z);
       sprite.material.opacity = 0.35;
       sprite.material.transparent = true;
       sprite.material.depthWrite = false;
@@ -128,7 +126,8 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
       clusterLabelsRef.current.forEach(s => scene.remove(s));
       clusterLabelsRef.current = [];
     };
-  }, [state.graphData.nodes]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.graphData.nodes, state.activeCluster, state.markets]);
 
   // Camera animation on data load
   useEffect(() => {
@@ -266,6 +265,9 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
         d3VelocityDecay={0.3}
         showNavInfo={false}
         enableNodeDrag={false}
+        linkColor={() => '#4A90B8'}
+        linkWidth={0.5}
+        linkOpacity={0.2}
       />
     </div>
   );

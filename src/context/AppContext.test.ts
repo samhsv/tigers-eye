@@ -46,6 +46,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
 const initialState: AppState = {
   markets: [],
   graphData: { nodes: [], links: [] },
+  activeCluster: 'category',
   selectedMarket: null,
   hoveredMarket: null,
   feedPanelOpen: true,

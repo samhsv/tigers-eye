@@ -7,6 +7,7 @@ import {
 } from 'react';
 import type { AppState, AppAction, GalaxyViewHandle } from '../types';
 import { fetchMarkets, buildGraphData } from '../lib/polymarket';
+import { computeEventLinks } from '../lib/clustering';
 import { streamAIResponse, MODELS, PROMPTS, buildMarketAnalysisMessage } from '../lib/ai';
 import { AppContext } from './AppContextDef';
 
@@ -14,6 +15,7 @@ import { AppContext } from './AppContextDef';
 const initialState: AppState = {
   markets: [],
   graphData: { nodes: [], links: [] },
+  activeCluster: 'category',
   selectedMarket: null,
   hoveredMarket: null,
   feedPanelOpen: true,
@@ -62,6 +64,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, dataLoaded: true };
     case 'SET_DATA_ERROR':
       return { ...state, dataError: action.payload };
+    case 'SET_CLUSTER_MODE':
+      return { ...state, activeCluster: action.payload };
+    case 'SET_GRAPH_LINKS':
+      if (action.payload.length === 0 && state.graphData.links.length === 0) return state;
+      return { ...state, graphData: { nodes: state.graphData.nodes, links: action.payload } };
     default:
       return state;
   }
@@ -118,6 +125,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.selectedMarket?.id]);
+
+  // Update graph links based on cluster mode
+  useEffect(() => {
+    if (!state.markets.length) return;
+    const links = state.activeCluster === 'event'
+      ? computeEventLinks(state.markets)
+      : [];
+    dispatch({ type: 'SET_GRAPH_LINKS', payload: links });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.activeCluster, state.markets]);
 
   const setGalaxyRef = useCallback((handle: GalaxyViewHandle | null) => {
     galaxyHandleRef.current = handle;

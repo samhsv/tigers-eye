@@ -125,6 +125,8 @@ export interface ClusterCenter {
   z: number;
 }
 
+export type ClusterMode = 'category' | 'contestedness' | 'timeHorizon' | 'momentum' | 'volumeTier' | 'event';
+
 // ── AI types ──
 
 export interface ChatMessage {
@@ -161,6 +163,7 @@ export interface MispricedResponse {
 export interface AppState {
   markets: MarketNode[];
   graphData: GraphData;
+  activeCluster: ClusterMode;
   selectedMarket: MarketNode | null;
   hoveredMarket: MarketNode | null;
   feedPanelOpen: boolean;
@@ -185,7 +188,9 @@ export type AppAction =
   | { type: 'RESET_AI_TAKE' }
   | { type: 'SET_AI_TAKE_LOADING'; payload: boolean }
   | { type: 'SET_DATA_LOADED' }
-  | { type: 'SET_DATA_ERROR'; payload: string };
+  | { type: 'SET_DATA_ERROR'; payload: string }
+  | { type: 'SET_CLUSTER_MODE'; payload: ClusterMode }
+  | { type: 'SET_GRAPH_LINKS'; payload: GraphLink[] };
 
 // ── Galaxy view ref ──
 

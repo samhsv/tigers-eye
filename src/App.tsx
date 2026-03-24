@@ -6,6 +6,7 @@ import LoadingScreen from './components/LoadingScreen';
 import Tooltip from './components/Tooltip';
 import MarketCard from './components/MarketCard';
 import FeedPanel from './components/FeedPanel';
+import LensBar from './components/LensBar';
 import type { GalaxyViewHandle } from './types';
 
 function AppContent() {
@@ -25,6 +26,7 @@ function AppContent() {
       <Tooltip />
       <MarketCard />
       <FeedPanel />
+      <LensBar />
       {/* Persistent branding watermark */}
       {state.dataLoaded && !state.selectedMarket && (
         <div className="fixed bottom-5 left-5 z-10 pointer-events-none">
