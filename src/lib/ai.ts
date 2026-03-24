@@ -100,12 +100,22 @@ export async function fetchAIJSON<T>(
   const content = data.choices?.[0]?.message?.content;
   if (!content) throw new Error('No content in AI response');
 
-  const cleaned = content
+  // Strip <think>...</think> reasoning blocks (reasoning models like Nemotron
+  // embed chain-of-thought in the content field)
+  const withoutThinking = content
+    .replace(/<think>[\s\S]*?<\/think>/g, '')
+    .trim();
+
+  const cleaned = withoutThinking
     .replace(/```json\s*/g, '')
     .replace(/```\s*/g, '')
     .trim();
 
-  return JSON.parse(cleaned) as T;
+  // Extract just the JSON object/array in case there's surrounding text
+  const jsonMatch = cleaned.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+  if (!jsonMatch) throw new Error('No JSON found in AI response');
+
+  return JSON.parse(jsonMatch[1]) as T;
 }
 
 // ── Model constants ──

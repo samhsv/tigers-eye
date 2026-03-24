@@ -59,7 +59,7 @@ export default function MispricedPanel() {
           { role: 'system', content: PROMPTS.MISPRICED_ANALYSIS },
           { role: 'user', content: buildMispricedMessage(topMarkets) },
         ],
-        2000,
+        4000,
         0.7,
       );
 
