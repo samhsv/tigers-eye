@@ -6,7 +6,8 @@ import {
   getMostActive,
   getClosestCalls,
 } from '../lib/polymarket';
-import { priceToPercent, formatDollar, formatPriceChange } from '../lib/format';
+import { priceToPercent, formatDollar, formatPriceChange, formatSpreadRatio } from '../lib/format';
+import { computeAllSignals, SIGNAL_COLORS } from '../lib/signals';
 import MispricedPanel from './MispricedPanel';
 import type { MarketNode } from '../types';
 
@@ -97,6 +98,11 @@ export default function FeedPanel() {
       active: getMostActive(state.markets),
       closest: getClosestCalls(state.markets),
     };
+  }, [state.markets]);
+
+  const signals = useMemo(() => {
+    if (!state.markets.length) return null;
+    return computeAllSignals(state.markets);
   }, [state.markets]);
 
   if (!state.dataLoaded || !feeds) return null;
@@ -221,6 +227,115 @@ export default function FeedPanel() {
             />
           ))}
         </FeedSection>
+
+        {/* Signals */}
+        {signals && (
+          <FeedSection title="Signals" icon="📡"
+            sectionKey="signals" isCollapsed={!!collapsed['signals']} onToggle={toggleSection}>
+            {signals.arbitrage.length === 0 && signals.anomalies.length === 0 &&
+             signals.spreadWatch.length === 0 && signals.correlations.length === 0 && (
+              <p className="px-3.5 py-3 text-[12px] text-text-secondary/60 italic">
+                No signals detected
+              </p>
+            )}
+
+            {signals.arbitrage.length > 0 && (
+              <div className="mt-2 mb-3">
+                <div className="border-l-2 pl-3 mb-2" style={{ borderColor: SIGNAL_COLORS.arbitrage }}>
+                  <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: SIGNAL_COLORS.arbitrage }}>
+                    Arbitrage
+                  </span>
+                </div>
+                {signals.arbitrage.map(s => (
+                  <button
+                    key={s.eventId}
+                    onClick={() => flyToNode(s.marketIds[0])}
+                    className="group w-full text-left px-3.5 py-3 hover:bg-white/[0.06] rounded-lg transition-all duration-150"
+                  >
+                    <span className="text-[13px] text-text-primary/90 leading-snug line-clamp-2 group-hover:text-text-primary transition-colors block">
+                      {s.eventTitle}
+                    </span>
+                    <span className="text-[11px] font-mono mt-1 block" style={{ color: SIGNAL_COLORS.arbitrage }}>
+                      {s.marketIds.length} markets · sum {(s.priceSum * 100).toFixed(0)}%
+                      {' '}({s.deviation > 0 ? '+' : ''}{(s.deviation * 100).toFixed(1)}pp)
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {signals.anomalies.length > 0 && (
+              <div className="mt-4 mb-3">
+                <div className="border-l-2 pl-3 mb-2" style={{ borderColor: SIGNAL_COLORS.anomaly }}>
+                  <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: SIGNAL_COLORS.anomaly }}>
+                    Anomalies
+                  </span>
+                </div>
+                {signals.anomalies.map(s => (
+                  <FeedItem
+                    key={s.market.id}
+                    market={s.market}
+                    onClick={() => flyToNode(s.market.id)}
+                    rightContent={
+                      <span style={{ color: SIGNAL_COLORS.anomaly }}>
+                        {formatPriceChange(s.priceChange)}
+                      </span>
+                    }
+                  />
+                ))}
+              </div>
+            )}
+
+            {signals.spreadWatch.length > 0 && (
+              <div className="mt-4 mb-3">
+                <div className="border-l-2 pl-3 mb-2" style={{ borderColor: SIGNAL_COLORS.spreadWatch }}>
+                  <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: SIGNAL_COLORS.spreadWatch }}>
+                    Wide Spreads
+                  </span>
+                </div>
+                {signals.spreadWatch.map(s => (
+                  <FeedItem
+                    key={s.market.id}
+                    market={s.market}
+                    onClick={() => flyToNode(s.market.id)}
+                    rightContent={
+                      <span style={{ color: SIGNAL_COLORS.spreadWatch }}>
+                        {formatSpreadRatio(s.ratio)} avg
+                      </span>
+                    }
+                  />
+                ))}
+              </div>
+            )}
+
+            {signals.correlations.length > 0 && (
+              <div className="mt-4 mb-3">
+                <div className="border-l-2 pl-3 mb-2" style={{ borderColor: SIGNAL_COLORS.correlation }}>
+                  <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: SIGNAL_COLORS.correlation }}>
+                    Cross-Category Movers
+                  </span>
+                </div>
+                {signals.correlations.map((s, i) => (
+                  <button
+                    key={`${s.marketA.id}-${s.marketB.id}-${i}`}
+                    onClick={() => flyToNode(s.marketA.id)}
+                    className="group w-full text-left px-3.5 py-3 hover:bg-white/[0.06] rounded-lg transition-all duration-150"
+                  >
+                    <span className="text-[12px] text-text-primary/80 leading-snug line-clamp-1 block">
+                      {s.marketA.question}
+                    </span>
+                    <span className="text-[12px] text-text-primary/80 leading-snug line-clamp-1 block mt-0.5">
+                      {s.marketB.question}
+                    </span>
+                    <span className="text-[11px] font-mono mt-1 block" style={{ color: SIGNAL_COLORS.correlation }}>
+                      {s.marketA.category} + {s.marketB.category} · {formatPriceChange(s.sharedChange)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </FeedSection>
+        )}
 
         {/* Mispriced Section */}
         <div className="mx-5 mt-3 mb-4">

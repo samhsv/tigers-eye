@@ -117,6 +117,8 @@ export interface NodeUserData {
   glowMat: THREE.MeshBasicMaterial;
   baseRadius: number;
   pulseSpeed: number;
+  signalRing?: THREE.Mesh;
+  signalRingMat?: THREE.MeshBasicMaterial;
 }
 
 export interface ClusterCenter {
@@ -156,6 +158,53 @@ export interface MispricedPick {
 
 export interface MispricedResponse {
   picks: MispricedPick[];
+}
+
+// ── Signal types ──
+
+export type SignalType = 'arbitrage' | 'correlation' | 'anomaly' | 'spreadWatch';
+
+export interface ArbitrageSignal {
+  type: 'arbitrage';
+  eventId: string;
+  eventTitle: string;
+  marketIds: string[];
+  priceSum: number;
+  deviation: number;
+}
+
+export interface CorrelationSignal {
+  type: 'correlation';
+  marketA: MarketNode;
+  marketB: MarketNode;
+  sharedChange: number;
+  direction: 'up' | 'down';
+}
+
+export interface AnomalySignal {
+  type: 'anomaly';
+  market: MarketNode;
+  priceChange: number;
+  volume24hr: number;
+  medianVolume24hr: number;
+}
+
+export interface SpreadWatchSignal {
+  type: 'spreadWatch';
+  market: MarketNode;
+  spread: number;
+  categoryAvg: number;
+  ratio: number;
+}
+
+export type Signal = ArbitrageSignal | CorrelationSignal | AnomalySignal | SpreadWatchSignal;
+
+export interface SignalResults {
+  arbitrage: ArbitrageSignal[];
+  correlations: CorrelationSignal[];
+  anomalies: AnomalySignal[];
+  spreadWatch: SpreadWatchSignal[];
+  flaggedNodeIds: Map<string, SignalType[]>;
 }
 
 // ── App state ──

@@ -46,3 +46,7 @@ export function contestednessLabel(value: number): string {
   if (value > 0.2) return 'Likely';
   return 'Strong Consensus';
 }
+
+export function formatSpreadRatio(ratio: number): string {
+  return `${ratio.toFixed(1)}x`;
+}
