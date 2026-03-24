@@ -1,11 +1,10 @@
-import { useRef, useCallback, useEffect, useImperativeHandle, forwardRef, useState, useMemo } from 'react';
+import { useRef, useCallback, useEffect, useImperativeHandle, forwardRef, useState } from 'react';
 import ForceGraph3D from 'react-force-graph-3d';
 import * as THREE from 'three';
 import SpriteText from 'three-spritetext';
 import { useApp } from '../context/useApp';
 import { getClusterConfig } from '../lib/clustering';
-import { computeAllSignals, SIGNAL_COLORS } from '../lib/signals';
-import type { GalaxyViewHandle, GraphNode, NodeUserData, SignalType } from '../types';
+import type { GalaxyViewHandle, GraphNode, NodeUserData } from '../types';
 
 const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref) {
   const { state, dispatch } = useApp();
@@ -17,11 +16,6 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
   });
   const clusterLabelsRef = useRef<THREE.Object3D[]>([]);
   const starsRef = useRef<THREE.Points | null>(null);
-
-  const signalFlags = useMemo(() => {
-    if (!state.markets.length) return new Map<string, SignalType[]>();
-    return computeAllSignals(state.markets).flaggedNodeIds;
-  }, [state.markets]);
 
   // Window resize
   useEffect(() => {
@@ -180,39 +174,16 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
     const glow = new THREE.Mesh(glowGeo, glowMat);
     group.add(glow);
 
-    // Signal ring for flagged nodes
-    const nodeSignals = signalFlags.get(node.id);
-    let signalRing: THREE.Mesh | undefined;
-    let signalRingMat: THREE.MeshBasicMaterial | undefined;
-
-    if (nodeSignals && nodeSignals.length > 0) {
-      const ringColor = SIGNAL_COLORS[nodeSignals[0]];
-      const ringGeo = new THREE.RingGeometry(radius * 2.2, radius * 2.5, 32);
-      signalRingMat = new THREE.MeshBasicMaterial({
-        color: new THREE.Color(ringColor),
-        transparent: true,
-        opacity: 0.5,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-      });
-      signalRing = new THREE.Mesh(ringGeo, signalRingMat);
-      signalRing.rotation.x = Math.PI / 2;
-      group.add(signalRing);
-    }
-
     group.userData = {
       glow,
       coreMat,
       glowMat,
       baseRadius: radius,
       pulseSpeed: node.pulseSpeed || 0,
-      signalRing,
-      signalRingMat,
     } satisfies NodeUserData;
 
     return group;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signalFlags]);
+  }, []);
 
   // Hover handler
   const handleNodeHover = useCallback(
@@ -256,7 +227,7 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
     [state.markets, dispatch],
   );
 
-  // Pulse animation + signal ring animation
+  // Pulse animation
   const handleEngineTick = useCallback(() => {
     const now = Date.now();
     const nodes = state.graphData.nodes as GraphNode[];
@@ -265,19 +236,11 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
     for (const node of nodes) {
       const obj = node.__threeObj;
       if (!obj?.userData?.glow) continue;
-      const ud = obj.userData as NodeUserData;
+      const { glow, pulseSpeed } = obj.userData as NodeUserData;
+      if (pulseSpeed <= 0) continue;
 
-      // Glow pulse
-      if (ud.pulseSpeed > 0) {
-        const scale = 1 + 0.15 * Math.sin(now * 0.001 * ud.pulseSpeed);
-        ud.glow.scale.setScalar(scale);
-      }
-
-      // Signal ring animation
-      if (ud.signalRing && ud.signalRingMat) {
-        ud.signalRing.rotation.z += 0.002;
-        ud.signalRingMat.opacity = 0.3 + 0.2 * Math.sin(now * 0.002);
-      }
+      const scale = 1 + 0.15 * Math.sin(now * 0.001 * pulseSpeed);
+      glow.scale.setScalar(scale);
     }
   }, [state.graphData.nodes]);
 

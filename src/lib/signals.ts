@@ -19,7 +19,12 @@ export const SIGNAL_PRIORITY: SignalType[] = ['arbitrage', 'anomaly', 'spreadWat
 
 // ── Arbitrage Detector ──
 // Group sibling markets by eventId, sum yes prices.
-// If |sum - 1.0| > 0.05, the event has mispricing across its markets.
+// Only works for mutually exclusive outcomes (e.g., "Who will win?").
+// Filters: max 10 siblings (larger events are multi-outcome, not mutually exclusive),
+// skip settled markets (price near 0 or 1).
+
+const MAX_ARBITRAGE_SIBLINGS = 10;
+const SETTLED_THRESHOLD = 0.02; // prices below this or above 1-this are effectively settled
 
 export function detectArbitrage(markets: MarketNode[]): ArbitrageSignal[] {
   const groups = new Map<string, MarketNode[]>();
@@ -31,17 +36,23 @@ export function detectArbitrage(markets: MarketNode[]): ArbitrageSignal[] {
 
   const signals: ArbitrageSignal[] = [];
   for (const [eventId, siblings] of groups) {
-    if (siblings.length < 2) continue;
+    if (siblings.length < 2 || siblings.length > MAX_ARBITRAGE_SIBLINGS) continue;
 
-    const priceSum = siblings.reduce((sum, m) => sum + m.outcomePrices.yes, 0);
+    // Exclude settled markets from the calculation
+    const live = siblings.filter(
+      m => m.outcomePrices.yes >= SETTLED_THRESHOLD && m.outcomePrices.yes <= 1 - SETTLED_THRESHOLD,
+    );
+    if (live.length < 2) continue;
+
+    const priceSum = live.reduce((sum, m) => sum + m.outcomePrices.yes, 0);
     const deviation = priceSum - 1.0;
 
     if (Math.abs(deviation) > 0.05) {
       signals.push({
         type: 'arbitrage',
         eventId,
-        eventTitle: siblings[0].eventTitle,
-        marketIds: siblings.map(m => m.id),
+        eventTitle: live[0].eventTitle,
+        marketIds: live.map(m => m.id),
         priceSum,
         deviation,
       });
@@ -197,11 +208,17 @@ function buildFlaggedNodeMap(
 
 // ── Main entry point ──
 
+function filterExpired(markets: MarketNode[]): MarketNode[] {
+  const now = Date.now();
+  return markets.filter(m => new Date(m.endDate).getTime() > now);
+}
+
 export function computeAllSignals(markets: MarketNode[]): SignalResults {
-  const arbitrage = detectArbitrage(markets);
-  const correlations = detectCorrelations(markets);
-  const anomalies = detectAnomalies(markets);
-  const spreadWatch = detectSpreadWatch(markets);
+  const live = filterExpired(markets);
+  const arbitrage = detectArbitrage(live);
+  const correlations = detectCorrelations(live);
+  const anomalies = detectAnomalies(live);
+  const spreadWatch = detectSpreadWatch(live);
   const flaggedNodeIds = buildFlaggedNodeMap(arbitrage, correlations, anomalies, spreadWatch);
 
   return { arbitrage, correlations, anomalies, spreadWatch, flaggedNodeIds };

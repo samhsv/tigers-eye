@@ -29,7 +29,7 @@ function mockMarket(overrides: Partial<MarketNode> = {}): MarketNode {
     bestBid: 0.64,
     bestAsk: 0.66,
     spread: 0.02,
-    endDate: '2025-12-31T00:00:00Z',
+    endDate: '2099-12-31T00:00:00Z',
     contestedness: 0.7,
     orbSize: 3,
     orbColor: '#E8943A',
@@ -92,6 +92,25 @@ describe('detectArbitrage', () => {
     const result = detectArbitrage(markets);
     expect(result).toHaveLength(2);
     expect(Math.abs(result[0].deviation)).toBeGreaterThanOrEqual(Math.abs(result[1].deviation));
+  });
+
+  it('ignores events with more than 10 siblings (multi-outcome, not mutually exclusive)', () => {
+    const markets = Array.from({ length: 15 }, (_, i) =>
+      mockMarket({ id: `${i}`, eventId: 'e1', outcomePrices: { yes: 0.20, no: 0.80 } }),
+    );
+    const result = detectArbitrage(markets);
+    expect(result).toHaveLength(0);
+  });
+
+  it('excludes settled markets (price near 0 or 1) from sum', () => {
+    const markets = [
+      mockMarket({ id: '1', eventId: 'e1', outcomePrices: { yes: 0.50, no: 0.50 } }),
+      mockMarket({ id: '2', eventId: 'e1', outcomePrices: { yes: 0.50, no: 0.50 } }),
+      // This settled market would push the sum over 1.05, but should be excluded
+      mockMarket({ id: '3', eventId: 'e1', outcomePrices: { yes: 0.01, no: 0.99 } }),
+    ];
+    const result = detectArbitrage(markets);
+    expect(result).toHaveLength(0);
   });
 });
 
@@ -275,6 +294,23 @@ describe('computeAllSignals', () => {
     // Arbitrage markets should be flagged
     expect(result.flaggedNodeIds.has('1')).toBe(true);
     expect(result.flaggedNodeIds.get('1')).toContain('arbitrage');
+  });
+
+  it('filters out expired markets', () => {
+    const pastDate = '2020-01-01T00:00:00Z';
+    const futureDate = '2099-12-31T00:00:00Z';
+    const markets = [
+      mockMarket({ id: '1', eventId: 'e1', endDate: pastDate, outcomePrices: { yes: 0.40, no: 0.60 }, oneDayPriceChange: 0.10, volume24hr: 50 }),
+      mockMarket({ id: '2', eventId: 'e1', endDate: pastDate, outcomePrices: { yes: 0.35, no: 0.65 } }),
+      mockMarket({ id: '3', eventId: 'e1', endDate: pastDate, outcomePrices: { yes: 0.35, no: 0.65 } }),
+      // Only this one is live
+      mockMarket({ id: '4', eventId: 'e2', endDate: futureDate, volume24hr: 10000, oneDayPriceChange: 0 }),
+    ];
+
+    const result = computeAllSignals(markets);
+    // Expired markets should not produce arbitrage or anomaly signals
+    expect(result.arbitrage).toHaveLength(0);
+    expect(result.anomalies).toHaveLength(0);
   });
 
   it('sorts flagged node signal types by priority', () => {

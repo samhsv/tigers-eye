@@ -117,8 +117,6 @@ export interface NodeUserData {
   glowMat: THREE.MeshBasicMaterial;
   baseRadius: number;
   pulseSpeed: number;
-  signalRing?: THREE.Mesh;
-  signalRingMat?: THREE.MeshBasicMaterial;
 }
 
 export interface ClusterCenter {
