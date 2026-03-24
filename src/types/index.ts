@@ -117,6 +117,7 @@ export interface NodeUserData {
   glowMat: THREE.MeshBasicMaterial;
   baseRadius: number;
   pulseSpeed: number;
+  currentScale: number;
 }
 
 export interface ClusterCenter {
@@ -126,6 +127,9 @@ export interface ClusterCenter {
 }
 
 export type ClusterMode = 'category' | 'contestedness' | 'timeHorizon' | 'momentum' | 'volumeTier' | 'event';
+
+export type ColorMode = 'contestedness' | 'momentum' | 'category' | 'spread' | 'liquidityRatio';
+export type SizeMode = 'volume' | 'liquidity' | 'activity24h' | 'contestedness' | 'spread';
 
 // ── AI types ──
 
@@ -211,6 +215,8 @@ export interface AppState {
   markets: MarketNode[];
   graphData: GraphData;
   activeCluster: ClusterMode;
+  activeColorMode: ColorMode;
+  activeSizeMode: SizeMode;
   selectedMarket: MarketNode | null;
   hoveredMarket: MarketNode | null;
   feedPanelOpen: boolean;
@@ -237,7 +243,9 @@ export type AppAction =
   | { type: 'SET_DATA_LOADED' }
   | { type: 'SET_DATA_ERROR'; payload: string }
   | { type: 'SET_CLUSTER_MODE'; payload: ClusterMode }
-  | { type: 'SET_GRAPH_LINKS'; payload: GraphLink[] };
+  | { type: 'SET_GRAPH_LINKS'; payload: GraphLink[] }
+  | { type: 'SET_COLOR_MODE'; payload: ColorMode }
+  | { type: 'SET_SIZE_MODE'; payload: SizeMode };
 
 // ── Galaxy view ref ──
 

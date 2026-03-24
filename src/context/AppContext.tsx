@@ -16,6 +16,8 @@ const initialState: AppState = {
   markets: [],
   graphData: { nodes: [], links: [] },
   activeCluster: 'category',
+  activeColorMode: 'contestedness',
+  activeSizeMode: 'volume',
   selectedMarket: null,
   hoveredMarket: null,
   feedPanelOpen: true,
@@ -69,6 +71,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'SET_GRAPH_LINKS':
       if (action.payload.length === 0 && state.graphData.links.length === 0) return state;
       return { ...state, graphData: { nodes: state.graphData.nodes, links: action.payload } };
+    case 'SET_COLOR_MODE':
+      return { ...state, activeColorMode: action.payload };
+    case 'SET_SIZE_MODE':
+      return { ...state, activeSizeMode: action.payload };
     default:
       return state;
   }

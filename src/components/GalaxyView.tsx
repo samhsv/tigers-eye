@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import SpriteText from 'three-spritetext';
 import { useApp } from '../context/useApp';
 import { getClusterConfig } from '../lib/clustering';
+import { computeColors, computeSizes } from '../lib/visualEncoding';
 import type { GalaxyViewHandle, GraphNode, NodeUserData } from '../types';
 
 const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref) {
@@ -146,6 +147,37 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
     return () => clearTimeout(timer);
   }, [state.dataLoaded]);
 
+  // Apply visual encoding (color + size) by mutating existing Three.js objects in-place.
+  // This avoids rebuilding nodes (which causes lag if createOrbNode deps change).
+  useEffect(() => {
+    const nodes = state.graphData.nodes as GraphNode[];
+    if (nodes.length === 0) return;
+
+    const colorMap = computeColors(state.markets, state.activeColorMode);
+    const sizeMap = computeSizes(state.markets, state.activeSizeMode);
+
+    for (const node of nodes) {
+      const obj = node.__threeObj;
+      if (!obj?.userData?.coreMat) continue;
+      const ud = obj.userData as NodeUserData;
+
+      // Apply color
+      const newColor = colorMap.get(node.id);
+      if (newColor) {
+        ud.coreMat.color.set(newColor);
+        ud.glowMat.color.set(newColor);
+      }
+
+      // Apply size via group scale (preserves core/glow ratio)
+      const newSize = sizeMap.get(node.id);
+      if (newSize !== undefined) {
+        const scaleFactor = newSize / ud.baseRadius;
+        ud.currentScale = scaleFactor;
+        obj.scale.setScalar(scaleFactor);
+      }
+    }
+  }, [state.graphData.nodes, state.markets, state.activeColorMode, state.activeSizeMode]);
+
   // Custom orb node renderer
   const createOrbNode = useCallback((node: GraphNode) => {
     const radius = node.orbSize || 2;
@@ -180,6 +212,7 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
       glowMat,
       baseRadius: radius,
       pulseSpeed: node.pulseSpeed || 0,
+      currentScale: 1,
     } satisfies NodeUserData;
 
     return group;
@@ -191,14 +224,16 @@ const GalaxyView = forwardRef<GalaxyViewHandle>(function GalaxyView(_props, ref)
       // Restore previous node
       const prevObj = prevNode?.__threeObj;
       if (prevObj?.userData?.coreMat) {
-        (prevObj.userData as NodeUserData).coreMat.opacity = 0.85;
-        prevObj.scale.setScalar(1);
+        const ud = prevObj.userData as NodeUserData;
+        ud.coreMat.opacity = 0.85;
+        prevObj.scale.setScalar(ud.currentScale);
       }
       // Highlight current node
       const currObj = node?.__threeObj;
       if (currObj?.userData?.coreMat) {
-        (currObj.userData as NodeUserData).coreMat.opacity = 1.0;
-        currObj.scale.setScalar(1.15);
+        const ud = currObj.userData as NodeUserData;
+        ud.coreMat.opacity = 1.0;
+        currObj.scale.setScalar(ud.currentScale * 1.15);
       }
       dispatch({ type: 'HOVER_MARKET', payload: node || null });
     },

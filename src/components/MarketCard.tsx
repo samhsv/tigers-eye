@@ -1,7 +1,8 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '../context/useApp';
 import { formatDollar, formatEndDate, formatPriceChange, contestednessLabel } from '../lib/format';
 import { categoryToColor } from '../lib/colors';
+import { computeMarketColor } from '../lib/visualEncoding';
 
 export default function MarketCard() {
   const { state, dispatch } = useApp();
@@ -23,6 +24,11 @@ export default function MarketCard() {
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     };
   }, [market]);
+
+  const accentColor = useMemo(
+    () => market ? computeMarketColor(market, state.activeColorMode, state.markets) : '#FF6B1A',
+    [market, state.activeColorMode, state.markets],
+  );
 
   if (!market) return null;
 
@@ -59,13 +65,13 @@ export default function MarketCard() {
           animation: isClosing
             ? 'slideOutToLeft 0.2s ease-in forwards'
             : 'slideInFromLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-          boxShadow: `0 8px 32px rgba(0, 0, 0, 0.4), 0 0 60px ${market.orbColor}15, 0 0 0 1px rgba(255, 255, 255, 0.03) inset`,
+          boxShadow: `0 8px 32px rgba(0, 0, 0, 0.4), 0 0 60px ${accentColor}15, 0 0 0 1px rgba(255, 255, 255, 0.03) inset`,
         }}
       >
         {/* Non-scrollable top portion */}
         <div className="shrink-0">
-          {/* Accent bar — bridges orb color to card */}
-          <div className="h-[3px]" style={{ background: market.orbColor }} />
+          {/* Accent bar — bridges galaxy orb color to card */}
+          <div className="h-[3px]" style={{ background: accentColor }} />
 
           {/* Header */}
           <div className="flex items-start justify-between p-6 pb-3">

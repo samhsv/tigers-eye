@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useApp } from '../context/useApp';
 import { priceToPercent, formatDollar, formatPriceChange } from '../lib/format';
 import { categoryToColor } from '../lib/colors';
+import { computeMarketColor } from '../lib/visualEncoding';
 
 export default function Tooltip() {
   const { state } = useApp();
@@ -21,6 +22,7 @@ export default function Tooltip() {
 
   const market = state.hoveredMarket;
   const catColor = categoryToColor(market.category);
+  const accentColor = computeMarketColor(market, state.activeColorMode, state.markets);
 
   return (
     <div
@@ -31,8 +33,8 @@ export default function Tooltip() {
         animation: 'scaleIn 0.15s ease-out',
       }}
     >
-      {/* Accent bar matching orb color */}
-      <div className="h-0.5" style={{ background: market.orbColor }} />
+      {/* Accent bar matching active galaxy color */}
+      <div className="h-0.5" style={{ background: accentColor }} />
 
       <div className="glass-panel !border-t-0 !rounded-t-none px-4 py-3">
         {/* Category */}

@@ -38,6 +38,15 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, dataLoaded: true };
     case 'SET_DATA_ERROR':
       return { ...state, dataError: action.payload };
+    case 'SET_CLUSTER_MODE':
+      return { ...state, activeCluster: action.payload };
+    case 'SET_GRAPH_LINKS':
+      if (action.payload.length === 0 && state.graphData.links.length === 0) return state;
+      return { ...state, graphData: { nodes: state.graphData.nodes, links: action.payload } };
+    case 'SET_COLOR_MODE':
+      return { ...state, activeColorMode: action.payload };
+    case 'SET_SIZE_MODE':
+      return { ...state, activeSizeMode: action.payload };
     default:
       return state;
   }
@@ -47,6 +56,8 @@ const initialState: AppState = {
   markets: [],
   graphData: { nodes: [], links: [] },
   activeCluster: 'category',
+  activeColorMode: 'contestedness',
+  activeSizeMode: 'volume',
   selectedMarket: null,
   hoveredMarket: null,
   feedPanelOpen: true,
@@ -144,6 +155,16 @@ describe('appReducer', () => {
 
     expect(state.markets).toBe(markets);
     expect(state.graphData).toBe(graphData);
+  });
+
+  it('handles SET_COLOR_MODE', () => {
+    const state = appReducer(initialState, { type: 'SET_COLOR_MODE', payload: 'momentum' });
+    expect(state.activeColorMode).toBe('momentum');
+  });
+
+  it('handles SET_SIZE_MODE', () => {
+    const state = appReducer(initialState, { type: 'SET_SIZE_MODE', payload: 'liquidity' });
+    expect(state.activeSizeMode).toBe('liquidity');
   });
 
   it('returns same state for unknown action', () => {
