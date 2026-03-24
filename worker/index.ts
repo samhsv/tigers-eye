@@ -111,7 +111,7 @@ async function handleAI(request: Request, env: Env): Promise<Response> {
     model: body.model,
     messages: body.messages,
     stream: body.stream ?? true,
-    max_tokens: body.max_tokens ?? 300,
+    max_tokens: body.max_tokens ?? 1000,
     temperature: body.temperature ?? 0.8,
   };
 

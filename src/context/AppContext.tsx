@@ -104,7 +104,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         { role: 'system', content: PROMPTS.MARKET_ANALYSIS },
         { role: 'user', content: buildMarketAnalysisMessage(market) },
       ],
-      maxTokens: 200,
+      maxTokens: 1000,
       temperature: 0.8,
       onChunk: (text) => dispatch({ type: 'APPEND_AI_TAKE', payload: text }),
       onDone: () => dispatch({ type: 'SET_AI_TAKE_LOADING', payload: false }),
