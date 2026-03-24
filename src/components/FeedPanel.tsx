@@ -6,7 +6,7 @@ import {
   getMostActive,
   getClosestCalls,
 } from '../lib/polymarket';
-import { truncateQuestion, priceToPercent, formatDollar, formatPriceChange } from '../lib/format';
+import { priceToPercent, formatDollar, formatPriceChange } from '../lib/format';
 import MispricedPanel from './MispricedPanel';
 import type { MarketNode } from '../types';
 
@@ -22,12 +22,12 @@ function FeedItem({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left px-3 py-2 hover:bg-white/5 rounded-lg transition-colors flex items-center justify-between gap-2"
+      className="group w-full text-left px-3 py-2.5 hover:bg-white/[0.04] rounded-lg transition-all duration-150 flex items-center justify-between gap-3"
     >
-      <span className="text-xs text-text-primary leading-tight flex-1 min-w-0 truncate">
-        {truncateQuestion(market.question, 50)}
+      <span className="text-[13px] text-text-primary/90 leading-snug flex-1 min-w-0 line-clamp-2 group-hover:text-text-primary transition-colors">
+        {market.question}
       </span>
-      <span className="text-xs font-mono shrink-0">{rightContent}</span>
+      <span className="text-xs font-mono shrink-0 tabular-nums">{rightContent}</span>
     </button>
   );
 }
@@ -42,14 +42,15 @@ function FeedSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mb-4">
-      <div className="flex items-center gap-1.5 px-3 mb-1">
+    <div className="mb-1">
+      <div className="flex items-center gap-2 px-5 py-2.5">
         <span className="text-sm">{icon}</span>
-        <span className="text-[10px] uppercase tracking-wider text-text-secondary font-medium">
+        <span className="text-[11px] uppercase tracking-wider text-text-secondary font-semibold">
           {title}
         </span>
+        <div className="flex-1 h-px bg-white/[0.04]" />
       </div>
-      <div>{children}</div>
+      <div className="px-2">{children}</div>
     </div>
   );
 }
@@ -73,11 +74,11 @@ export default function FeedPanel() {
     <>
       {/* Mobile toggle FAB */}
       <button
-        className="fixed bottom-6 right-6 z-30 lg:hidden w-12 h-12 rounded-full bg-auburn-glow text-white flex items-center justify-center shadow-lg"
+        className="fixed bottom-6 right-6 z-30 lg:hidden w-14 h-14 rounded-full glass-panel text-white flex items-center justify-center shadow-lg"
         style={{ animation: 'pulse-glow 2s ease-in-out infinite' }}
         onClick={() => dispatch({ type: 'TOGGLE_FEED_PANEL' })}
       >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+        <svg width="22" height="22" viewBox="0 0 20 20" fill="currentColor">
           <rect x="2" y="4" width="16" height="2" rx="1" />
           <rect x="2" y="9" width="16" height="2" rx="1" />
           <rect x="2" y="14" width="16" height="2" rx="1" />
@@ -94,20 +95,27 @@ export default function FeedPanel() {
 
       {/* Panel */}
       <div
-        className={`fixed top-0 right-0 z-20 h-full w-[320px] bg-bg-secondary/95 backdrop-blur-md border-l border-white/5 overflow-y-auto transition-transform duration-300
+        className={`fixed top-0 right-0 z-20 h-full w-[340px] glass-panel border-l border-white/[0.06] overflow-y-auto transition-transform duration-300
           ${state.feedPanelOpen ? 'translate-x-0' : 'translate-x-full'}
-          lg:translate-x-0`}
+          lg:translate-x-0 lg:rounded-none`}
       >
         {/* Header */}
-        <div className="px-4 pt-5 pb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-text-primary tracking-wide uppercase">
-            Market Feed
-          </h2>
+        <div className="px-5 pt-6 pb-4 flex items-start justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-text-primary tracking-tight">
+              Market Feed
+            </h2>
+            <p className="text-[11px] text-text-secondary mt-0.5">
+              {state.markets.length} live markets
+            </p>
+          </div>
           <button
-            className="lg:hidden text-text-secondary hover:text-text-primary"
+            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-colors text-text-secondary hover:text-text-primary"
             onClick={() => dispatch({ type: 'TOGGLE_FEED_PANEL' })}
           >
-            &times;
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M4 4l8 8M12 4l-8 8" />
+            </svg>
           </button>
         </div>
 
@@ -122,9 +130,9 @@ export default function FeedPanel() {
                 <span
                   className={
                     m.oneDayPriceChange > 0
-                      ? 'text-green-400'
+                      ? 'text-yes-green'
                       : m.oneDayPriceChange < 0
-                        ? 'text-red-400'
+                        ? 'text-no-red'
                         : 'text-text-secondary'
                   }
                 >

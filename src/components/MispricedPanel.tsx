@@ -12,8 +12,6 @@ function subscribeTick(callback: () => void) {
 }
 
 function useCooldownTimer(cooldownUntil: number | null) {
-  // getSnapshot is called by useSyncExternalStore — it may call Date.now()
-  // because it is a snapshot of external state (time), which is the intended use
   const getSnapshot = useCallback(() => {
     if (!cooldownUntil) return { active: false, remaining: '' };
     const diff = cooldownUntil - Date.now();
@@ -26,7 +24,6 @@ function useCooldownTimer(cooldownUntil: number | null) {
     };
   }, [cooldownUntil]);
 
-  // Cache the result to maintain referential stability when values haven't changed
   const cachedRef = useRef({ active: false, remaining: '' });
   const stableGetSnapshot = useCallback(() => {
     const next = getSnapshot();
@@ -77,7 +74,7 @@ export default function MispricedPanel() {
       <button
         onClick={handleAnalyze}
         disabled={state.mispricedLoading || isOnCooldown}
-        className="w-full py-2.5 rounded-lg font-semibold text-sm text-white transition-all disabled:opacity-50"
+        className="w-full py-3 rounded-xl font-semibold text-base text-white transition-all disabled:opacity-50"
         style={{
           background: state.mispricedLoading || isOnCooldown
             ? '#3a3a4a'
@@ -97,58 +94,80 @@ export default function MispricedPanel() {
 
       {/* Results */}
       {state.mispricedData && state.mispricedData.length > 0 && (
-        <div className="mt-3 space-y-2">
-          <div className="text-[10px] uppercase tracking-wider text-ai-accent font-medium px-1">
-            AI thinks the crowd is wrong
+        <div className="mt-4 space-y-3">
+          <div className="border-l-2 border-ai-accent pl-2">
+            <span className="text-[11px] uppercase tracking-wider text-ai-accent font-semibold">
+              Mispricing Signals
+            </span>
           </div>
 
-          {state.mispricedData.map((pick, i) => (
-            <button
-              key={pick.marketId || i}
-              onClick={() => flyToNode(pick.marketId)}
-              className="w-full text-left p-3 rounded-lg bg-bg-card/80 hover:bg-bg-card transition-colors border border-white/5"
-            >
-              <p className="text-xs text-text-primary leading-tight mb-2">
-                {pick.question}
-              </p>
+          {state.mispricedData.map((pick, i) => {
+            const minPrice = Math.min(pick.currentPrice, pick.fairPrice);
+            const maxPrice = Math.max(pick.currentPrice, pick.fairPrice);
+            const gapPp = Math.abs(Math.round((pick.fairPrice - pick.currentPrice) * 100));
 
-              {/* Price comparison bar */}
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex-1 h-1.5 bg-bg-secondary rounded-full relative">
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-text-secondary"
-                    style={{ left: `${pick.currentPrice * 100}%` }}
-                  />
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-ai-accent"
-                    style={{ left: `${pick.fairPrice * 100}%` }}
-                  />
+            return (
+              <button
+                key={pick.marketId || i}
+                onClick={() => flyToNode(pick.marketId)}
+                className="w-full text-left p-4 rounded-xl bg-glass-bg hover:bg-surface-elevated transition-all duration-200 border border-glass-border hover:border-glass-border-hover"
+              >
+                <p className="text-[13px] text-text-primary font-medium leading-tight mb-3">
+                  {pick.question}
+                </p>
+
+                {/* Price range visualization */}
+                <div className="mb-3">
+                  <div className="relative h-6 rounded-md bg-white/[0.04] overflow-hidden">
+                    {/* Mispricing range fill */}
+                    <div
+                      className="absolute top-0 bottom-0 opacity-20"
+                      style={{
+                        left: `${minPrice * 100}%`,
+                        width: `${(maxPrice - minPrice) * 100}%`,
+                        background: pick.direction === 'OVER' ? '#34D399' : '#F87171',
+                      }}
+                    />
+                    {/* Current price marker */}
+                    <div
+                      className="absolute top-0 bottom-0 w-0.5 bg-text-secondary z-10"
+                      style={{ left: `${pick.currentPrice * 100}%` }}
+                    />
+                    {/* Fair price marker */}
+                    <div
+                      className="absolute top-0 bottom-0 w-0.5 bg-ai-accent z-10"
+                      style={{ left: `${pick.fairPrice * 100}%` }}
+                    />
+                    {/* Labels inside the bar */}
+                    <div className="absolute inset-0 flex items-center justify-between px-2 text-[10px] font-mono">
+                      <span className="text-text-secondary">Now {priceToPercent(pick.currentPrice)}</span>
+                      <span className="text-ai-accent">Fair {priceToPercent(pick.fairPrice)}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between text-[10px] mb-1.5">
-                <span className="text-text-secondary">
-                  Now: {priceToPercent(pick.currentPrice)}
-                </span>
-                <span
-                  className={`font-medium px-1.5 py-0.5 rounded text-[9px] ${
-                    pick.direction === 'OVER'
-                      ? 'bg-green-500/20 text-green-400'
-                      : 'bg-red-500/20 text-red-400'
-                  }`}
-                >
-                  {pick.direction}
-                </span>
-                <span className="text-ai-accent">
-                  Fair: {priceToPercent(pick.fairPrice)}
-                </span>
-              </div>
+                {/* Direction badge + gap */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span
+                    className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${
+                      pick.direction === 'OVER'
+                        ? 'bg-yes-green/15 text-yes-green'
+                        : 'bg-no-red/15 text-no-red'
+                    }`}
+                  >
+                    {pick.direction === 'OVER' ? 'Undervalued' : 'Overvalued'}
+                  </span>
+                  <span className="text-[11px] text-text-secondary font-mono">
+                    {gapPp}pp gap
+                  </span>
+                </div>
 
-              <p className="text-[11px] text-text-secondary leading-relaxed">
-                {pick.reasoning}
-              </p>
-            </button>
-          ))}
+                <p className="text-xs text-text-secondary/90 leading-relaxed">
+                  {pick.reasoning}
+                </p>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
