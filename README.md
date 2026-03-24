@@ -81,9 +81,9 @@ tigers-eye/
 # Install dependencies
 npm install
 
-# Set up the OpenRouter API key for the worker
-npx wrangler secret put OPENROUTER_API_KEY
-# Paste your key when prompted
+# Create a local secrets file for the Cloudflare Worker
+cp .dev.vars.example .dev.vars
+# Then edit .dev.vars and replace the placeholder with your real OpenRouter API key
 
 # Start both the Vite dev server and the Cloudflare Worker
 # Terminal 1:
@@ -94,6 +94,8 @@ npm run dev
 ```
 
 The app will be available at `http://localhost:5173`. The Vite dev server proxies `/api/*` requests to the worker at `localhost:8787`.
+
+> **Note:** `.dev.vars` is gitignored — your API key stays local. The `.dev.vars.example` file is checked in as a template. For production, set the secret via `npx wrangler secret put OPENROUTER_API_KEY`.
 
 ### Scripts
 

@@ -1,0 +1,5 @@
+# Local development secrets for Cloudflare Workers (wrangler dev)
+# Copy this file to .dev.vars and fill in your values:
+#   cp .dev.vars.example .dev.vars
+
+OPENROUTER_API_KEY=your-openrouter-api-key-here

@@ -10,6 +10,10 @@ Tiger's Eye is a 3D interactive visualization of live Polymarket prediction mark
 # Install dependencies
 npm install
 
+# Set up local secrets (required for AI features)
+cp .dev.vars.example .dev.vars
+# Edit .dev.vars with your OpenRouter API key
+
 # Run locally (two terminals):
 npm run dev:worker    # Cloudflare Worker on port 8787
 npm run dev           # Vite dev server on port 5173
@@ -18,7 +22,7 @@ npm run dev           # Vite dev server on port 5173
 npm run build
 ```
 
-The OpenRouter API key must be configured for AI features: `npx wrangler secret put OPENROUTER_API_KEY`
+For production, set the key via `npx wrangler secret put OPENROUTER_API_KEY`.
 
 ## Architecture
 
