@@ -69,12 +69,12 @@ export default function MispricedPanel() {
   }, [state.markets, state.mispricedLoading, isOnCooldown, dispatch]);
 
   return (
-    <div className="px-3 pb-4">
+    <div className="pb-2">
       {/* Button */}
       <button
         onClick={handleAnalyze}
         disabled={state.mispricedLoading || isOnCooldown}
-        className="w-full py-3 rounded-xl font-semibold text-base text-white transition-all disabled:opacity-50"
+        className="w-full py-3.5 rounded-xl font-semibold text-base text-white transition-all disabled:opacity-50"
         style={{
           background: state.mispricedLoading || isOnCooldown
             ? '#3a3a4a'
@@ -94,7 +94,7 @@ export default function MispricedPanel() {
 
       {/* Results */}
       {state.mispricedData && state.mispricedData.length > 0 && (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-4">
           <div className="border-l-2 border-ai-accent pl-2">
             <span className="text-[11px] uppercase tracking-wider text-ai-accent font-semibold">
               Mispricing Signals

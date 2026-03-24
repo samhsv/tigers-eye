@@ -100,63 +100,69 @@ export default function MarketCard() {
             </h2>
           </div>
 
-          {/* Probability gauge */}
-          <div className="px-5 pb-4">
-            <div className="flex items-baseline justify-between mb-2">
-              <div>
-                <span className="text-2xl lg:text-3xl font-bold text-yes-green">{yesPercent}</span>
-                <span className="text-lg text-yes-green/60 ml-0.5">%</span>
-                <span className="text-[11px] uppercase tracking-wider text-text-secondary ml-2">Yes</span>
-              </div>
-              <div>
-                <span className="text-[11px] uppercase tracking-wider text-text-secondary mr-2">No</span>
-                <span className="text-2xl lg:text-3xl font-bold text-no-red/70">{noPercent}</span>
-                <span className="text-lg text-no-red/40 ml-0.5">%</span>
-              </div>
-            </div>
-            <div className="h-2 rounded-full bg-white/5 overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${yesPercent}%`,
-                  background: 'linear-gradient(90deg, #34D399, #34D399CC)',
-                }}
-              />
-            </div>
-            <div className="mt-2 text-center">
-              <span
-                className="text-[11px] font-medium tracking-wide"
-                style={{ color: market.orbColor }}
-              >
-                {contestednessLabel(market.contestedness)}
-              </span>
-            </div>
-          </div>
-
-          {/* Stats row */}
-          <div className="px-5 pb-4 flex flex-wrap gap-3">
-            {stats.map((stat) => (
-              <div key={stat.label} className="flex-1 min-w-[60px] text-center">
-                <div className="text-[11px] text-text-secondary mb-0.5">{stat.label}</div>
-                <div
-                  className="text-sm font-mono font-medium"
-                  style={{ color: (stat as { color?: string }).color || undefined }}
-                >
-                  {stat.value}
+          {/* Data zone */}
+          <div className="mx-5 mb-4 section-card p-4">
+            {/* Probability gauge */}
+            <div className="mb-4">
+              <div className="flex items-baseline justify-between mb-2">
+                <div>
+                  <span className="text-2xl lg:text-3xl font-bold text-yes-green">{yesPercent}</span>
+                  <span className="text-lg text-yes-green/60 ml-0.5">%</span>
+                  <span className="text-[11px] uppercase tracking-wider text-text-secondary ml-2">Yes</span>
+                </div>
+                <div>
+                  <span className="text-[11px] uppercase tracking-wider text-text-secondary mr-2">No</span>
+                  <span className="text-2xl lg:text-3xl font-bold text-no-red/70">{noPercent}</span>
+                  <span className="text-lg text-no-red/40 ml-0.5">%</span>
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${yesPercent}%`,
+                    background: 'linear-gradient(90deg, #34D399, #34D399CC)',
+                  }}
+                />
+              </div>
+              {/* Anchored contestedness label with side lines */}
+              <div className="mt-3 flex items-center justify-center gap-2">
+                <div className="flex-1 h-px bg-white/[0.06]" />
+                <span
+                  className="text-[11px] font-medium tracking-wide px-2"
+                  style={{ color: market.orbColor }}
+                >
+                  {contestednessLabel(market.contestedness)}
+                </span>
+                <div className="flex-1 h-px bg-white/[0.06]" />
+              </div>
+            </div>
 
-          {/* Styled divider */}
-          <div
-            className="h-px mx-5"
-            style={{ background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.08), transparent 70%)' }}
-          />
+            {/* Internal separator */}
+            <div className="h-px bg-white/[0.08] mb-3" />
+
+            {/* Stats row */}
+            <div className="flex flex-wrap gap-3">
+              {stats.map((stat, i) => (
+                <div key={stat.label} className="flex-1 min-w-[60px] text-center flex items-center">
+                  {i > 0 && <div className="w-px h-6 bg-white/[0.10] -ml-1.5 mr-1.5 shrink-0" />}
+                  <div className="flex-1">
+                    <div className="text-[11px] text-text-secondary mb-1">{stat.label}</div>
+                    <div
+                      className="text-sm font-mono font-medium"
+                      style={{ color: (stat as { color?: string }).color || undefined }}
+                    >
+                      {stat.value}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* AI Take section — fills remaining space */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-5">
+        <div className="flex-1 min-h-0 overflow-y-auto p-5" style={{ background: 'rgba(255, 184, 77, 0.02)' }}>
           <div className="flex items-center gap-2 mb-3">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
               <path d="M7 1l1.5 4.5L13 7l-4.5 1.5L7 13l-1.5-4.5L1 7l4.5-1.5L7 1z" fill="currentColor" className="text-ai-accent" />
