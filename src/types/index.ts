@@ -13,8 +13,8 @@ export interface RawMarket {
   slug: string;
   endDate: string;
   description: string;
-  outcomes: string[];
-  outcomePrices: string[]; // STRING array: ["0.85", "0.15"] — must parseFloat
+  outcomes: string; // JSON-encoded string: "[\"Yes\", \"No\"]" — must JSON.parse
+  outcomePrices: string; // JSON-encoded string: "[\"0.85\", \"0.15\"]" — must JSON.parse then parseFloat
   volume: string;
   active: boolean;
   closed: boolean;

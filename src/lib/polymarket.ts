@@ -42,9 +42,15 @@ function normalizeEvents(events: RawEvent[]): MarketNode[] {
     for (const market of event.markets) {
       if (market.closed || !market.active) continue;
 
-      // Parse outcome prices (API returns string array)
-      const yesPrice = parseFloat(market.outcomePrices?.[0]) || 0;
-      const noPrice = parseFloat(market.outcomePrices?.[1]) || (1 - yesPrice);
+      // Parse outcome prices (API returns JSON-encoded string, e.g. "[\"0.85\", \"0.15\"]")
+      let parsedPrices: string[] = [];
+      try {
+        parsedPrices = typeof market.outcomePrices === 'string'
+          ? JSON.parse(market.outcomePrices)
+          : market.outcomePrices ?? [];
+      } catch { /* malformed — leave as empty */ }
+      const yesPrice = parseFloat(parsedPrices[0]) || 0;
+      const noPrice = parseFloat(parsedPrices[1]) || (1 - yesPrice);
 
       const volume = market.volumeNum || parseFloat(market.volume) || 0;
       const liquidity = market.liquidityNum || parseFloat(market.liquidity || '0') || 0;
@@ -68,7 +74,13 @@ function normalizeEvents(events: RawEvent[]): MarketNode[] {
         eventTitle: event.title,
         category,
         outcomePrices: { yes: yesPrice, no: noPrice },
-        outcomes: market.outcomes || ['Yes', 'No'],
+        outcomes: (() => {
+          try {
+            return typeof market.outcomes === 'string'
+              ? JSON.parse(market.outcomes)
+              : market.outcomes ?? ['Yes', 'No'];
+          } catch { return ['Yes', 'No']; }
+        })(),
         volume,
         liquidity,
         volume24hr: market.volume24hr || 0,
